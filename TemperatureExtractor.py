@@ -9,6 +9,7 @@
 
 import matplotlib
 matplotlib.use('Qt5Agg')
+from matplotlib import pyplot as plt
 import cv2
 from matplotlib import path
 import numpy as np
@@ -19,6 +20,7 @@ from pathlib import Path
 import glob
 import os
 from PIL import Image
+import imageio
 import multiprocessing
 from multiprocessing import Manager, Process
 
@@ -56,6 +58,7 @@ class TemperatureExtractor:
 
         self.prepare_workspace()
         files = self.file_feed()
+        checker_files = files[::10]
 
         for file in files:
 
@@ -96,7 +99,7 @@ class TemperatureExtractor:
                 vertices = []
                 for c in coordinates:
                     c = [int(abs(a)) for a in c]
-                    cv2.circle(im, (c[0], c[1]), 2, 12, -1)
+                    cv2.circle(im, (c[0], c[1]), 1, int(np.max(im)), -1)
                     vertices.append(c)
                 # make a matplotlib path
                 plot_path = path.Path(vertices, closed=True)
@@ -130,7 +133,13 @@ class TemperatureExtractor:
             df = pd.DataFrame(data, columns=data[0].keys())
             df.to_csv(self.path_data / csv_name, index=False)
 
-    def process_image(self, work_queue, result):
+            # save some checker images
+            if file in checker_files:
+                out_image = ((im - im.min()) * (1/(im.max() - im.min()) * 255)).astype('uint8')
+                out_name = self.path_checker / png_name
+                imageio.imwrite(out_name, out_image)
+
+    def process_image(self, work_queue, result, checker_files):
 
         for job in iter(work_queue.get, 'STOP'):
 
@@ -173,7 +182,7 @@ class TemperatureExtractor:
                 vertices = []
                 for c in coordinates:
                     c = [int(abs(a)) for a in c]
-                    cv2.circle(im, (c[0], c[1]), 2, 12, -1)
+                    cv2.circle(im, (c[0], c[1]), 1, int(np.max(im)), -1)
                     vertices.append(c)
                 # make a matplotlib path
                 plot_path = path.Path(vertices, closed=True)
@@ -205,12 +214,20 @@ class TemperatureExtractor:
 
             df = pd.DataFrame(data, columns=data[0].keys())
             df.to_csv(self.path_data / csv_name, index=False)
+
+            # save some checker images
+            if file in checker_files:
+                out_image = ((im - im.min()) * (1/(im.max() - im.min()) * 255)).astype('uint8')
+                out_name = self.path_checker / png_name
+                imageio.imwrite(out_name, out_image)
+
             result.put(file)
 
     def process_images_par(self):
 
         self.prepare_workspace()
         files = self.file_feed()
+        checker_files = files[::10]
 
         if len(files) > 0:
             # make job and results queue
@@ -232,7 +249,7 @@ class TemperatureExtractor:
             # Start processes
             for w in range(multiprocessing.cpu_count() - 2):
                 p = Process(target=self.process_image,
-                            args=(jobs, results))
+                            args=(jobs, results, checker_files))
                 p.daemon = True
                 p.start()
                 processes.append(p)
