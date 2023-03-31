@@ -8,8 +8,7 @@
 
 
 import matplotlib
-matplotlib.use('Qt5Agg')
-from matplotlib import pyplot as plt
+# from matplotlib import pyplot as plt
 import cv2
 from matplotlib import path
 import numpy as np
@@ -23,6 +22,10 @@ from PIL import Image
 import imageio
 import multiprocessing
 from multiprocessing import Manager, Process
+matplotlib.use('Qt5Agg')
+
+
+# TODO enable processing on Monster
 
 
 class TemperatureExtractor:
@@ -49,12 +52,16 @@ class TemperatureExtractor:
         :param img_type: a character string, the file extension, e.g. "JPG"
         :return: paths
         """
+        # TODO check for already processed files and remove from list of files to process
         files = []
         for d in self.dirs_to_process:
             files.extend(glob.glob(f'{d}/*.{self.img_type}'))
         return files
 
     def process_images_seq(self):
+        """
+        Processes each thermal image sequentially
+        """
 
         self.prepare_workspace()
         files = self.file_feed()
@@ -128,6 +135,9 @@ class TemperatureExtractor:
                               'mean': mean, 'median': median,
                               'sd': sd, 'var': var}
 
+                # TODO add measurement time point
+                #  (either from file name, or from when it was saved on disk: check with NK)
+
                 data.append({**value_stat})
 
             df = pd.DataFrame(data, columns=data[0].keys())
@@ -140,6 +150,9 @@ class TemperatureExtractor:
                 imageio.imwrite(out_name, out_image)
 
     def process_image(self, work_queue, result, checker_files):
+        """
+        Processes a single thermal image within a parallel workflow
+        """
 
         for job in iter(work_queue.get, 'STOP'):
 
@@ -210,6 +223,10 @@ class TemperatureExtractor:
                 value_stat = {'plot_UID': plot_label, 'count': count,
                               'mean': mean, 'median': median,
                               'sd': sd, 'var': var}
+
+                # TODO add measurement time point
+                #  (either from file name, or from when it was saved on disk: check with NK)
+
                 data.append({**value_stat})
 
             df = pd.DataFrame(data, columns=data[0].keys())
