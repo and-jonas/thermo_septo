@@ -30,7 +30,7 @@ matplotlib.use('Qt5Agg')
 
 class TemperatureExtractor:
 
-    def __init__(self, dirs_to_process, dir_output, img_type, overwrite):
+    def __init__(self, dirs_to_process, path_geojson, dir_output, img_type, overwrite):
         self.dirs_to_process = Path(dirs_to_process),
         self.path_geojson = path_geojson
         self.path_output = Path(dir_output)
@@ -88,7 +88,7 @@ class TemperatureExtractor:
             # create a copy of the image
             im = copy.copy(img_array)
 
-            with open(path_geojson, 'r') as infile:
+            with open(self.path_geojson, 'r') as infile:
                 polygon_mask = geojson.load(infile)
 
             polygons = polygon_mask["features"]
@@ -100,8 +100,7 @@ class TemperatureExtractor:
             for polygon in polygons:
 
                 coordinates = polygon["geometry"]["coordinates"][0][0]
-                id = polygon["properties"]["id"]
-                plot_label = "ESWW0060" + str(id).zfill(3)
+                plot_label = polygon["properties"]["plot_UID"]
 
                 # iterate over corners
                 vertices = []
@@ -177,7 +176,7 @@ class TemperatureExtractor:
             # create a copy of the image
             im = copy.copy(img_array)
 
-            with open("Z:/Public/Jonas/007_Thermo/ESWW006_plot_shapes_w_id.geojson", 'r') as infile:
+            with open(self.path_geojson, 'r') as infile:
                 polygon_mask = geojson.load(infile)
 
             polygons = polygon_mask["features"]
@@ -189,8 +188,7 @@ class TemperatureExtractor:
             for polygon in polygons:
 
                 coordinates = polygon["geometry"]["coordinates"][0][0]
-                id = polygon["properties"]["id"]
-                plot_label = "ESWW0060" + str(id).zfill(3)
+                plot_label = polygon["properties"]["plot_UID"]
 
                 # iterate over corners
                 vertices = []
@@ -265,7 +263,7 @@ class TemperatureExtractor:
                 jobs.put(job)
 
             # Start processes
-            for w in range(multiprocessing.cpu_count() - 2):
+            for w in range(multiprocessing.cpu_count() - 1):
                 p = Process(target=self.process_image,
                             args=(jobs, results, checker_files))
                 p.daemon = True
@@ -273,7 +271,7 @@ class TemperatureExtractor:
                 processes.append(p)
                 jobs.put('STOP')
 
-            print(str(len(files)) + " jobs started, " + str(multiprocessing.cpu_count() - 2) + " workers")
+            print(str(len(files)) + " jobs started, " + str(multiprocessing.cpu_count() - 1) + " workers")
 
             # Get results and increment counter along with it
             while count < max_jobs:
