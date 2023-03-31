@@ -32,6 +32,7 @@ class TemperatureExtractor:
 
     def __init__(self, dirs_to_process, dir_output, img_type, overwrite):
         self.dirs_to_process = Path(dirs_to_process),
+        self.path_geojson = path_geojson
         self.path_output = Path(dir_output)
         self.path_checker = self.path_output / "Checker"
         self.path_data = self.path_output / "Data"
@@ -87,7 +88,7 @@ class TemperatureExtractor:
             # create a copy of the image
             im = copy.copy(img_array)
 
-            with open("Z:/Public/Jonas/007_Thermo/ESWW006_plot_shapes_w_id.geojson", 'r') as infile:
+            with open(path_geojson, 'r') as infile:
                 polygon_mask = geojson.load(infile)
 
             polygons = polygon_mask["features"]

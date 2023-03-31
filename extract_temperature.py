@@ -6,6 +6,7 @@ workdir = 'Z:/Public/Jonas/007_Thermo'
 
 def run():
     dirs_to_process = f'{workdir}/TestImages'
+    path_geojson = f'{workdir}/ESWW006_plot_shapes_w_id.geojson'
     dir_output = f'{workdir}/Output'
     temperature_extractor = TemperatureExtractor(
         dirs_to_process=dirs_to_process,
