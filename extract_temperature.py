@@ -15,9 +15,9 @@ def run():
         dir_output=dir_output,
         img_type="tif",
         overwrite=True,
-        n_cpus=20,
+        n_cpus=2,
     )
-    temperature_extractor.process_images_seq()
+    temperature_extractor.process_images_par()
 
 
 if __name__ == "__main__":

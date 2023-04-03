@@ -188,7 +188,7 @@ class TemperatureExtractor:
             # iterate over polygons
             for polygon in polygons:
 
-                coordinates = polygon["geometry"]["coordinates"][0][0]
+                coordinates = polygon["geometry"]["coordinates"][0]
                 plot_label = polygon["properties"]["plot_UID"]
 
                 # iterate over corners
