@@ -194,7 +194,7 @@ class TemperatureExtractor:
                 # iterate over corners
                 vertices = []
                 for c in coordinates:
-                    c = [int(abs(a)) for a in c]
+                    c = [int(abs(a)) for a in c[:2]]
                     cv2.circle(im, (c[0], c[1]), 1, int(np.max(im)), -1)
                     vertices.append(c)
                 # make a matplotlib path
