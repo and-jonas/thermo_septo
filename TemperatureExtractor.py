@@ -8,7 +8,7 @@
 
 
 import matplotlib
-# from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 import cv2
 from matplotlib import path
 import numpy as np
@@ -30,7 +30,7 @@ matplotlib.use('Qt5Agg')
 
 class TemperatureExtractor:
 
-    def __init__(self, dirs_to_process, path_geojson, dir_output, img_type, overwrite):
+    def __init__(self, dirs_to_process, path_geojson, dir_output, img_type, overwrite, n_cpus):
         self.dirs_to_process = Path(dirs_to_process),
         self.path_geojson = path_geojson
         self.path_output = Path(dir_output)
@@ -38,6 +38,7 @@ class TemperatureExtractor:
         self.path_data = self.path_output / "Data"
         self.img_type = img_type
         self.overwrite = overwrite
+        self.n_cpus = n_cpus
 
     def prepare_workspace(self):
         """
@@ -99,13 +100,13 @@ class TemperatureExtractor:
             # iterate over polygons
             for polygon in polygons:
 
-                coordinates = polygon["geometry"]["coordinates"][0][0]
+                coordinates = polygon["geometry"]["coordinates"][0]
                 plot_label = polygon["properties"]["plot_UID"]
 
                 # iterate over corners
                 vertices = []
                 for c in coordinates:
-                    c = [int(abs(a)) for a in c]
+                    c = [int(abs(a)) for a in c[:2]]
                     cv2.circle(im, (c[0], c[1]), 1, int(np.max(im)), -1)
                     vertices.append(c)
                 # make a matplotlib path
@@ -263,7 +264,7 @@ class TemperatureExtractor:
                 jobs.put(job)
 
             # Start processes
-            for w in range(multiprocessing.cpu_count() - 1):
+            for w in range(self.n_cpus):
                 p = Process(target=self.process_image,
                             args=(jobs, results, checker_files))
                 p.daemon = True
@@ -271,7 +272,7 @@ class TemperatureExtractor:
                 processes.append(p)
                 jobs.put('STOP')
 
-            print(str(len(files)) + " jobs started, " + str(multiprocessing.cpu_count() - 1) + " workers")
+            print(str(len(files)) + " jobs started, " + str(self.n_cpus) + " workers")
 
             # Get results and increment counter along with it
             while count < max_jobs:
