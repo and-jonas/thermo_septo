@@ -58,6 +58,14 @@ class TemperatureExtractor:
         files = []
         for d in self.dirs_to_process:
             files.extend(glob.glob(f'{d}/*.{self.img_type}'))
+
+        # remove already processed files from list
+        processed = glob.glob(f'{self.path_data}/*.csv')
+        processed = [os.path.basename(x).replace(".csv", "") for x in processed]
+        files = [f for f in files if os.path.basename(f).replace("." + self.img_type, "") not in processed]
+
+        print(str(len(processed)) + " already processed. Processing " + str(len(files)))
+
         return files
 
     def process_images_seq(self):
@@ -67,7 +75,7 @@ class TemperatureExtractor:
 
         self.prepare_workspace()
         files = self.file_feed()
-        checker_files = files[::10]
+        checker_files = files[::50]
 
         for file in files:
 
@@ -244,7 +252,7 @@ class TemperatureExtractor:
 
         self.prepare_workspace()
         files = self.file_feed()
-        checker_files = files[::10]
+        checker_files = files[::50]
 
         if len(files) > 0:
             # make job and results queue

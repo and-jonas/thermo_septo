@@ -6,7 +6,7 @@ workdir = 'Z:/Public/Jonas/007_Thermo'
 
 
 def run():
-    dirs_to_process = f'{workdir}/TestImages'
+    dirs_to_process = 'O:/Evaluation/Hiwi/2022_PhotoInd_Anderegg_Jonas_MSP4/FLIR_corrected_complete'
     path_geojson = f'{workdir}/ESWW006_plot_shapes_generated_adjusted.geojson'
     dir_output = f'{workdir}/Output'
     temperature_extractor = TemperatureExtractor(
@@ -15,7 +15,7 @@ def run():
         dir_output=dir_output,
         img_type="tif",
         overwrite=True,
-        n_cpus=2,
+        n_cpus=7,
     )
     temperature_extractor.process_images_par()
 
