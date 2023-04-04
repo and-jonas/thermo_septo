@@ -22,6 +22,7 @@ from PIL import Image
 import imageio
 import multiprocessing
 from multiprocessing import Manager, Process
+from datetime import datetime
 matplotlib.use('Qt5Agg')
 
 
@@ -75,15 +76,18 @@ class TemperatureExtractor:
 
         self.prepare_workspace()
         files = self.file_feed()
-        checker_files = files[::50]
+        checker_files = files
 
         for file in files:
 
             # read image
             base_name = os.path.basename(file)
-            stem_name = Path(file).stem
             png_name = base_name.replace("." + self.img_type, ".png")
             csv_name = base_name.replace("." + self.img_type, ".csv")
+
+            # get file creation time
+            m_time = os.path.getmtime(file)
+            dt_m = datetime.fromtimestamp(np.floor(m_time))
 
             img = Image.open(file)
             img_array = np.array(img)
@@ -115,8 +119,9 @@ class TemperatureExtractor:
                 vertices = []
                 for c in coordinates:
                     c = [int(abs(a)) for a in c[:2]]
-                    cv2.circle(im, (c[0], c[1]), 1, int(np.max(im)), -1)
                     vertices.append(c)
+                helper = np.array([tuple(x) for x in vertices])
+                cv2.drawContours(im, [helper], 0,  int(np.max(im)), 1)
                 # make a matplotlib path
                 plot_path = path.Path(vertices, closed=True)
 
@@ -137,12 +142,19 @@ class TemperatureExtractor:
                 median = np.ma.median(zoneraster)
                 sd = np.ma.std(zoneraster)
                 var = np.ma.var(zoneraster)
-                # values_percentiles = np.percentile(zoneraster, np.arange(0, 101, 1))
+                m_data = np.where(sample_mask_image, img_array, np.nan)
+                perc3 = np.nanpercentile(m_data, 3)
+                perc97 = np.nanpercentile(m_data, 97)
+                int_perc = perc97 - perc3
 
                 # assemble output
-                value_stat = {'plot_UID': plot_label, 'count': count,
+                value_stat = {'timestamp': str(dt_m),
+                              'plot_UID': plot_label,
+                              'count': count,
                               'mean': mean, 'median': median,
-                              'sd': sd, 'var': var}
+                              'sd': sd, 'var': var,
+                              'percentile_3': perc3, 'percentile_97': perc97,
+                              'int_percentile': int_perc}
 
                 # TODO add measurement time point
                 #  (either from file name, or from when it was saved on disk: check with NK)
@@ -169,9 +181,12 @@ class TemperatureExtractor:
 
             # read image
             base_name = os.path.basename(file)
-            stem_name = Path(file).stem
             png_name = base_name.replace("." + self.img_type, ".png")
             csv_name = base_name.replace("." + self.img_type, ".csv")
+
+            # get file creation time
+            m_time = os.path.getmtime(file)
+            dt_m = datetime.fromtimestamp(np.floor(m_time))
 
             img = Image.open(file)
             img_array = np.array(img)
@@ -203,8 +218,9 @@ class TemperatureExtractor:
                 vertices = []
                 for c in coordinates:
                     c = [int(abs(a)) for a in c[:2]]
-                    cv2.circle(im, (c[0], c[1]), 1, int(np.max(im)), -1)
                     vertices.append(c)
+                helper = np.array([tuple(x) for x in vertices])
+                cv2.drawContours(im, [helper], 0,  int(np.max(im)), 1)
                 # make a matplotlib path
                 plot_path = path.Path(vertices, closed=True)
 
@@ -225,12 +241,19 @@ class TemperatureExtractor:
                 median = np.ma.median(zoneraster)
                 sd = np.ma.std(zoneraster)
                 var = np.ma.var(zoneraster)
-                # values_percentiles = np.percentile(zoneraster, np.arange(0, 101, 1))
+                m_data = np.where(sample_mask_image, img_array, np.nan)
+                perc3 = np.nanpercentile(m_data, 3)
+                perc97 = np.nanpercentile(m_data, 97)
+                int_perc = perc97 - perc3
 
                 # assemble output
-                value_stat = {'plot_UID': plot_label, 'count': count,
+                value_stat = {'timestamp': str(dt_m),
+                              'plot_UID': plot_label,
+                              'count': count,
                               'mean': mean, 'median': median,
-                              'sd': sd, 'var': var}
+                              'sd': sd, 'var': var,
+                              'percentile_3': perc3, 'percentile_97': perc97,
+                              'int_percentile': int_perc}
 
                 # TODO add measurement time point
                 #  (either from file name, or from when it was saved on disk: check with NK)
@@ -252,7 +275,7 @@ class TemperatureExtractor:
 
         self.prepare_workspace()
         files = self.file_feed()
-        checker_files = files[::50]
+        checker_files = files
 
         if len(files) > 0:
             # make job and results queue
